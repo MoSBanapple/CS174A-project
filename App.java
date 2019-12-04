@@ -454,11 +454,11 @@ public class App implements Testable
 				String[] statements = new String[7];
 				statements[0] = "CREATE TABLE Customers (taxID CHAR(9), name CHAR(20), address CHAR(50), PIN CHAR(50), PRIMARY KEY (taxID))";
 				statements[1] = "CREATE TABLE Accounts (accountID CHAR(50), interestRate REAL, branchName CHAR(20), balance REAL, isOpen NUMBER(1,0), accountType CHAR(20), PRIMARY KEY (accountID))";
-				statements[2] = "CREATE TABLE Owns (taxID CHAR(50), accountID CHAR(50), isPrimary NUMBER(1,0), PRIMARY KEY (taxID, accountID), FOREIGN KEY (taxID) REFERENCES Customers, FOREIGN KEY (accountID) REFERENCES Accounts)";
-				statements[3] = "CREATE TABLE Transactions (transactionID INTEGER, accountID CHAR(50), otherAccount CHAR(50), transactionDate DATE, transactionType CHAR(20), amount REAL, checkNumber INTEGER, PRIMARY KEY (transactionID), FOREIGN KEY (accountID) REFERENCES Accounts)";
+				statements[2] = "CREATE TABLE Owns (taxID CHAR(50), accountID CHAR(50), isPrimary NUMBER(1,0), PRIMARY KEY (taxID, accountID), FOREIGN KEY (taxID) REFERENCES Customers ON DELETE CASCADE, FOREIGN KEY (accountID) REFERENCES Accounts ON DELETE CASCADE)";
+				statements[3] = "CREATE TABLE Transactions (transactionID INTEGER, accountID CHAR(50), otherAccount CHAR(50), transactionDate DATE, transactionType CHAR(20), amount REAL, checkNumber INTEGER, PRIMARY KEY (transactionID), FOREIGN KEY (accountID) REFERENCES Accounts ON DELETE CASCADE)";
 				statements[4] = "CREATE TABLE CurrentDate (currentdate Date)";
 				statements[5] = "CREATE TABLE InterestAdded (dateAdded DATE)";
-				statements[6] = "CREATE TABLE PocketOwner(pocketID CHAR(50), ownerID CHAR(50), PRIMARY KEY(pocketID, ownerID), FOREIGN KEY (pocketID) REFERENCES Accounts (accountID), FOREIGN KEY (ownerID) REFERENCES Accounts (accountID))";
+				statements[6] = "CREATE TABLE PocketOwner(pocketID CHAR(50), ownerID CHAR(50), PRIMARY KEY(pocketID, ownerID), FOREIGN KEY (pocketID) REFERENCES Accounts (accountID) ON DELETE CASCADE, FOREIGN KEY (ownerID) REFERENCES Accounts (accountID) ON DELETE CASCADE)";
 				for (int i = 0; i < statements.length; i++){
 				    ResultSet resultSet = statement.executeQuery( statements[i] );
 						System.out.println(i);
@@ -1306,7 +1306,9 @@ public class App implements Testable
 		}
 		try( Statement statement = _connection.createStatement() ){
 		    ResultSet resultSet = statement.executeQuery("DELETE FROM Accounts WHERE isOpen = 0");
-		    return "0";
+				ResultSet set2 = statement.executeQuery("DELETE FROM Accounts WHERE accountType = \'Pocket\' and accountID not in (Select P.pocketID from PocketOwner P)");
+		    ResultSet set3 = statement.executeQuery("DELETE FROM Customers WHERE taxID NOT IN (Select O.taxID from Owns O)");
+				return "0";
 		}
 		catch( Exception e )
 		{
