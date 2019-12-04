@@ -22,6 +22,7 @@ public class App implements Testable
 	private OracleConnection _connection;                   // Example connection object to your DB.
 	private String currentTaxID = "";
         private String[] monthStr = {"JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"};
+	private String defaultBranchName = "DefaultBranch";
 	/**
 	 * Default constructor.
 	 * DO NOT REMOVE.
@@ -453,11 +454,11 @@ public class App implements Testable
 				String[] statements = new String[7];
 				statements[0] = "CREATE TABLE Customers (taxID CHAR(9), name CHAR(20), address CHAR(50), PIN CHAR(50), PRIMARY KEY (taxID))";
 				statements[1] = "CREATE TABLE Accounts (accountID CHAR(50), interestRate REAL, branchName CHAR(20), balance REAL, isOpen NUMBER(1,0), accountType CHAR(20), PRIMARY KEY (accountID))";
-				statements[2] = "CREATE TABLE Owns (taxID CHAR(50), accountID CHAR(50), isPrimary NUMBER(1,0), PRIMARY KEY (taxID, accountID), FOREIGN KEY (taxID) REFERENCES Customers ON DELETE CASCADE, FOREIGN KEY (accountID) REFERENCES Accounts ON DELETE CASCADE)";
-				statements[3] = "CREATE TABLE Transactions (transactionID INTEGER, accountID CHAR(50), otherAccount CHAR(50), transactionDate DATE, transactionType CHAR(20), amount REAL, checkNumber INTEGER, PRIMARY KEY (transactionID), FOREIGN KEY (accountID) REFERENCES Accounts ON DELETE CASCADE)";
+				statements[2] = "CREATE TABLE Owns (taxID CHAR(50), accountID CHAR(50), isPrimary NUMBER(1,0), PRIMARY KEY (taxID, accountID), FOREIGN KEY (taxID) REFERENCES Customers, FOREIGN KEY (accountID) REFERENCES Accounts)";
+				statements[3] = "CREATE TABLE Transactions (transactionID INTEGER, accountID CHAR(50), otherAccount CHAR(50), transactionDate DATE, transactionType CHAR(20), amount REAL, checkNumber INTEGER, PRIMARY KEY (transactionID), FOREIGN KEY (accountID) REFERENCES Accounts)";
 				statements[4] = "CREATE TABLE CurrentDate (currentdate Date)";
 				statements[5] = "CREATE TABLE InterestAdded (dateAdded DATE)";
-				statements[6] = "CREATE TABLE PocketOwner(pocketID CHAR(50), ownerID CHAR(50), PRIMARY KEY(pocketID, ownerID), FOREIGN KEY (pocketID) REFERENCES Accounts (accountID) ON DELETE CASCADE, FOREIGN KEY (ownerID) REFERENCES Accounts (accountID) ON DELETE CASCADE)";
+				statements[6] = "CREATE TABLE PocketOwner(pocketID CHAR(50), ownerID CHAR(50), PRIMARY KEY(pocketID, ownerID), FOREIGN KEY (pocketID) REFERENCES Accounts (accountID), FOREIGN KEY (ownerID) REFERENCES Accounts (accountID))";
 				for (int i = 0; i < statements.length; i++){
 				    ResultSet resultSet = statement.executeQuery( statements[i] );
 						System.out.println(i);
@@ -496,7 +497,7 @@ public class App implements Testable
 			try {
 			    Statement statement = _connection.createStatement();
 			    ResultSet resultSet = statement.executeQuery("UPDATE CurrentDate SET currentdate = '" + dateStr + "'");
-					return "0";
+					return "0" + dateStr;
 			}catch (Exception e){
 			    System.err.println( e.getMessage() );
 			    return "1";
@@ -553,12 +554,12 @@ public class App implements Testable
 				counter = 4;
 			}
 
-    	statement.executeQuery("INSERT INTO Accounts VALUES (\'" + id + "\',"+ interestRate + ", null, " + initialBalance + ", 1, \'" + type + "\')"); //1 near the end means account is open
+    	statement.executeQuery("INSERT INTO Accounts VALUES (\'" + id + "\',"+ interestRate + ",\'" + defaultBranchName + "\'" + initialBalance + ", 1, \'" + type + "\')"); //1 near the end means account is open
 			statement.executeQuery("INSERT INTO Owns VALUES (\'" + tin + "\',\'" + id + "\', 1)");
 			//TODO: not sure if the above line is necessary
 			System.out.println("create_saving_checking4");
 			deposit(id, initialBalance);
-    	return "0";
+    	return "0" + id + " " + type + " " + Double.toString(initialBalance) + " " + tin;
     }
     catch( SQLException e )
 		{
@@ -572,6 +573,7 @@ public class App implements Testable
 	{
 		double interestRate = 0.0;
 		String type = "Pocket";
+		String branch = "";
 
 		try (Statement statement = _connection.createStatement()) {
 
@@ -584,25 +586,26 @@ public class App implements Testable
 			}
 			else
 			{
-				ResultSet balance = statement.executeQuery( "SELECT balance FROM Accounts WHERE accountID = \'" + linkedId + "\'");
-				if( !balance.next() )
+				ResultSet linkedAccount = statement.executeQuery( "SELECT balance, branchName FROM Accounts WHERE accountID = \'" + linkedId + "\'");
+				if( !linkedAccount.next() )
 				{
 					System.out.println("Linked account is invalid.");
 					return "1";
 				}
-				if (balance.getDouble(1) - (initialTopUp + 5) <= 0.01) //TODO: not sure if getDouble works, check
+				if (linkedAccount.getDouble(1) - (initialTopUp + 5) <= 0.01) //TODO: not sure if getDouble works, check
 				{
 					System.out.println("Not enough balance in the linked account.");
 					return "1";
 				}
+				branch = linkedAccount.getString(2);
 			}
 
-			statement.executeQuery("INSERT INTO Accounts VALUES (\'" + id + "\',"+ interestRate + ", null, 0.0, 1, \'Pocket\')"); //1 near the end means account is open
+			statement.executeQuery("INSERT INTO Accounts VALUES (\'" + id + "\',"+ interestRate + ",\'" + branch + "\', 0.0, 1, \'Pocket\')"); //1 near the end means account is open
 			statement.executeQuery("INSERT INTO Owns VALUES (\'" + tin + "\',\'" + id + "\', 1)");
 			statement.executeQuery("INSERT INTO PocketOwner VALUES (\'" + id + "\',\'"+ linkedId + "\')"); //1 near the end means account is open
 
 			topUp(id, initialTopUp);
-			return "0";
+			return "0" + id + " Pocket " + Double.toString(initialTopUp) + " " + tin;
     }
     catch( SQLException e )
 		{
@@ -642,6 +645,7 @@ public class App implements Testable
 	@Override
 	public String deposit( String accountId, double amount )
 	{
+			double bal = 0.0;
 			if (amount <= 0)
 			{
 				System.out.println("Amount to deposit is invalid.");
@@ -650,6 +654,26 @@ public class App implements Testable
 			int transactionId = 0;
 
 			try (Statement statement = _connection.createStatement()) {
+					if (!isOwnerOf(accountId))
+					{
+						System.out.println("Current customer is not an owner of the account");
+						return "1";
+					}
+
+					if (verifyAccountType(accountId, "Pocket"))
+					{
+						System.out.println("The account is not a checkings or savings account.");
+						return "1";
+					}
+
+					ResultSet balance = statement.executeQuery( "SELECT balance FROM Accounts WHERE accountID = \'" + accountId + "\'");
+					if( !balance.next() )
+					{
+						System.out.println("Account is invalid.");
+						return "1";
+					}
+					bal = balance.getDouble(1);
+
 					System.out.println("deposit 1");
 					ResultSet transIds = statement.executeQuery( "SELECT nvl(max(transactionId), 0) AS maxTransId FROM Transactions");
 					System.out.println("deposit 2");
@@ -677,7 +701,7 @@ public class App implements Testable
 					pstmt.execute();*/
 					//statement.executeQuery("INSERT INTO Transactions VALUES (" + transactionId + ",\'" + accountId + "\', null, " + currDate + ", \'deposit\', " + amount + ", null)");
 					System.out.println("deposit 7");
-					return "0";
+					return "0 " + Double.toString(bal) + " " + Double.toString(bal+amount);
 	      }
 	        catch( SQLException e )
 			{
@@ -726,6 +750,17 @@ public class App implements Testable
 		double deductableAmount = amount;
 
 		try (Statement statement = _connection.createStatement()) {
+				if (!isOwnerOf(accountId))
+				{
+					System.out.println("Current customer is not an owner of the account");
+					return "1";
+				}
+				if (!verifyAccountType(accountId, "Pocket"))
+				{
+					System.out.println("The account is not a pocket account.");
+					return "1";
+				}
+
 				ResultSet linkedAccount = statement.executeQuery("SELECT ownerID FROM PocketOwner WHERE pocketID = \'" + accountId + "\'");
 				if( !linkedAccount.next() )
 				{
@@ -734,10 +769,10 @@ public class App implements Testable
 				}
 				linkedId = linkedAccount.getString(1); // TODO: check if it's 0 or 1
 				firstTransaction = isFirstTransaction(accountId);
-				if (firstTransaction)
+				/*if (firstTransaction)
 				{
 					deductableAmount += 5.00;
-				}
+				}*/
 				/*ResultSet balance = statement.executeQuery( "SELECT balance FROM Accounts WHERE accountID = \'" + linkedId + "\'");
 				if( !balance.next() )
 				{
@@ -821,7 +856,10 @@ public class App implements Testable
 	@Override
 	public String payFriend( String from, String to, double amount )
 	{
-		//TODO: check for distinct account owners
+		if (from.equals(to))
+		{
+			return "1 Cannot pay to the same account";
+		}
 		if (amount <= 0)
 		{
 			System.out.println("Amount to deposit is invalid.");
@@ -830,6 +868,18 @@ public class App implements Testable
 		if (!verifyAccountType(from, "Pocket") || !verifyAccountType(to, "Pocket"))
 		{
 			System.out.println("At least one account is not a pocket account.");
+			return "1";
+		}
+
+		if (!isOwnerOf(from))
+		{
+			System.out.println("Current customer is not an owner of the sending account");
+			return "1";
+		}
+
+		if (isOwnerOf(to))
+		{
+			System.out.println("Current customer is also an owner of the receiving account.");
 			return "1";
 		}
 
@@ -957,6 +1007,12 @@ public class App implements Testable
 				return "1";
 			}
 
+			if (!isOwnerOf(id))
+			{
+				System.out.println("Current customer is not an owner of the account");
+				return "1";
+			}
+
 			if (!verifyAccountType(id, "Pocket"))
 			{
 				System.out.println("Account is not a pocket account.");
@@ -991,6 +1047,12 @@ public class App implements Testable
 			if (amount <= 0)
 			{
 				System.out.println("Amount to collect is invalid.");
+				return "1";
+			}
+
+			if (!isOwnerOf(id))
+			{
+				System.out.println("Current customer is not an owner of the account");
 				return "1";
 			}
 
@@ -1039,6 +1101,12 @@ public class App implements Testable
 				return "1";
 			}
 
+			if (!isOwnerOf(id))
+			{
+				System.out.println("Current customer is not an owner of the account");
+				return "1";
+			}
+
 			if (verifyAccountType(id, "Pocket"))
 			{
 				System.out.println("Account is not a checkings or savings account.");
@@ -1067,7 +1135,11 @@ public class App implements Testable
 
 	public String wire(String from, String to, double amount)
 	{
-		//TODO: check for distinct account owners
+		if (from.equals(to))
+		{
+			return "1 Cannot wire to the same account";
+		}
+
 		try (Statement statement = _connection.createStatement()) {
 			double deductableAmount = amount;
 			if (amount <= 0)
@@ -1079,6 +1151,18 @@ public class App implements Testable
 			if (verifyAccountType(from, "Pocket") || verifyAccountType(to, "Pocket"))
 			{
 				System.out.println("At least one account is not a checkings or savings account.");
+				return "1";
+			}
+
+			if (!isOwnerOf(from))
+			{
+				System.out.println("Current customer is not an owner of the sending account");
+				return "1";
+			}
+
+			if (isOwnerOf(to))
+			{
+				System.out.println("Current customer is also an owner of the receiving account.");
 				return "1";
 			}
 
@@ -1110,7 +1194,10 @@ public class App implements Testable
 
 	public String transfer(String from, String to, double amount)
 	{
-		//TODO: check that the from and to accounts are not the same. should check for all transactions
+		if (from.equals(to))
+		{
+			return "1 Cannot transfer to the same account";
+		}
 		try (Statement statement = _connection.createStatement()) {
 			double deductableAmount = amount;
 			if (amount <= 0 || amount > 2000)
@@ -1125,7 +1212,11 @@ public class App implements Testable
 				return "1";
 			}
 
-			//TODO: check for ownership of accounts
+			if (!isOwnerOf(from) || !isOwnerOf(to))
+			{
+				System.out.println("Current customer is not an owner of both accounts.");
+				return "1";
+			}
 
 			int transactionId = 0;
 
@@ -1215,8 +1306,6 @@ public class App implements Testable
 		}
 		try( Statement statement = _connection.createStatement() ){
 		    ResultSet resultSet = statement.executeQuery("DELETE FROM Accounts WHERE isOpen = 0");
-		    ResultSet set2 = statement.executeQuery("DELETE FROM Accounts WHERE accountType = \'Pocket\' and accountID not in (Select P.pocketID from PocketOwner P)");
-		    ResultSet set3 = statement.executeQuery("DELETE FROM Customers WHERE taxID NOT IN (Select O.taxID from Owns O)");
 		    return "0";
 		}
 		catch( Exception e )
@@ -1505,6 +1594,26 @@ public String changeInterestRate(AccountType accountType, double newRate){
         return null;
     }
 
+		//checks that the two accounts have the current customer as an owner
+		private boolean isOwnerOf(String account)
+		{
+			try (Statement statement = _connection.createStatement()){
+					ResultSet resultSet = statement.executeQuery("SELECT * FROM Owns WHERE taxID = \'" + currentTaxID + "\' AND accountID = \'" + account + "\'");
+					//ResultSet resultSet2 = statement.executeQuery("SELECT * FROM Owns WHERE taxID = \'" + currentTaxID + "\' AND accountID = \'" + account2 + "\'");
+					//if (!resultSet1.next() || !resultSet2.next())
+					if (!resultSet.next())
+					{
+						return false;
+					}
+					return true;
+			}
+			catch( Exception e )
+			{
+					System.err.println( e.getMessage() );
+					return false;
+			}
+		}
+
 		//checks if the amount deducted is valid
 		//amount exceeds balance: invalid transaction
 		//amount equals balance or leaves $0.01: valid transaction but the account is closed
@@ -1581,25 +1690,25 @@ public String changeInterestRate(AccountType accountType, double newRate){
 
 		private void executeTransaction(String statement, int transId, String account1, String account2, String type, double amt, int checkNo)
 		{
-		    try{
-		    Statement statement2 = _connection.createStatement();
-			ResultSet day = statement2.executeQuery("SELECT * FROM CurrentDate");
-			Date currDate = new Date(2011, 3, 1);
-			if (day.next())
-				currDate = day.getDate("currentdate");
+	    try{
+	    	Statement statement2 = _connection.createStatement();
+				ResultSet day = statement2.executeQuery("SELECT * FROM CurrentDate");
+				Date currDate = new Date(2011, 3, 1);
+				if (day.next())
+					currDate = day.getDate("currentdate");
 
-			PreparedStatement pstmt = _connection.prepareStatement(statement);
+				PreparedStatement pstmt = _connection.prepareStatement(statement);
 
-			pstmt.setInt(1, transId);
-			pstmt.setString(2, account1);
-			pstmt.setString(3, account2);
-			pstmt.setDate(4, currDate);
-			pstmt.setString(5, type);
-			pstmt.setDouble(6, amt);
-			pstmt.setInt(7, checkNo);
-			pstmt.execute();
-		    } catch (Exception e){
-			System.err.println(e.getMessage());
-		    }
+				pstmt.setInt(1, transId);
+				pstmt.setString(2, account1);
+				pstmt.setString(3, account2);
+				pstmt.setDate(4, currDate);
+				pstmt.setString(5, type);
+				pstmt.setDouble(6, amt);
+				pstmt.setInt(7, checkNo);
+				pstmt.execute();
+	    } catch (Exception e){
+					System.err.println(e.getMessage());
+	    }
 	}
 }
