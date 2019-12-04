@@ -1216,6 +1216,7 @@ public class App implements Testable
 		try( Statement statement = _connection.createStatement() ){
 		    ResultSet resultSet = statement.executeQuery("DELETE FROM Accounts WHERE isOpen = 0");
 		    ResultSet set2 = statement.executeQuery("DELETE FROM Accounts WHERE accountType = \'Pocket\' and accountID not in (Select P.pocketID from PocketOwner P)");
+		    ResultSet set3 = statement.executeQuery("DELETE FROM Customers WHERE taxID NOT IN (Select O.taxID from Owns O)");
 		    return "0";
 		}
 		catch( Exception e )
