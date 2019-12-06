@@ -1526,13 +1526,13 @@ public class App implements Testable
 				String accId = accountSet.getString(1);
 				double interestRate = 0;
 			        String accountType = accountSet.getString(3).trim();
-				System.out.println("Account type: " + accountSet.getString(3));
+				//System.out.println("Account type: " + accountSet.getString(3));
 				if (accountType.equals("InterestChecking")){
 				    interestRate = interestCheckingRate;
 				} else if (accountType.equals("Savings")){
 				    interestRate = savingsRate;
 				}
-				System.out.println("Made it past, interestRate = " + interestRate);
+				//System.out.println("Made it past, interestRate = " + interestRate);
 				double averageBalance = finalBalance;
 				//ResultSet transacts = statement2.executeQuery("SELECT T.transactionDate, T.transactionType, T.amount FROM Transactions T WHERE T.accountID = \'" + accId + "\' and T.transactionDate >= \'" + formatDateToSQL(firstDate) + "\' and T.transactionDate <= \'" + formatDateToSQL(currentDate) + "\' order by T.transactionDate desc");
 				ResultSet transacts = statement2.executeQuery("SELECT T.transactionDate, T.transactionType, T.amount FROM Transactions T WHERE T.accountID = \'" + accId + "\' order by T.transactionDate desc");
@@ -1547,7 +1547,7 @@ public class App implements Testable
 					}
 				}
 				double newBalance = averageBalance*interestRate + finalBalance;
-				System.out.println("" + newBalance);
+				//System.out.println("" + newBalance);
 				Statement statement3 = _connection.createStatement();
 				ResultSet interestSet = statement3.executeQuery("UPDATE Accounts SET balance = " + newBalance + " where accountID = \'" + accId + "\'");
 				ResultSet transIds = statement3.executeQuery( "SELECT nvl(max(transactionId), 0) as maxTransId FROM Transactions");
