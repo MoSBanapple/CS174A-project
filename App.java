@@ -455,6 +455,7 @@ public class App implements Testable
 			statement.executeQuery( "DROP TABLE PocketOwner" );
 			statement.executeQuery( "DROP TABLE Customers" );
 			statement.executeQuery( "DROP TABLE Accounts" );
+			statement.executeQuery( "DROP TABLE InterestRates");
 			return "0";
 		}
 		catch( SQLException e )
@@ -1518,6 +1519,17 @@ public class App implements Testable
 				double newBalance = averageBalance*interestRate + finalBalance;
 				Statement statement3 = _connection.createStatement();
 				ResultSet interestSet = statement3.executeQuery("UPDATE Accounts SET balance = " + newBalance + " where accountID = \'" + accId + "\'");
+				ResultSet transIds = statement.executeQuery( "SELECT nvl(max(transactionId), 0) as maxTransId FROM Transactions");
+				if (!transIds.next())
+				{
+					System.out.println("No transactions but weird bug");
+					return "1";
+				}
+				int transactionId = transIds.getInt("maxTransId")+1;
+				String insertStatement = "INSERT INTO Transactions VALUES (?,?,?,?,?,?,?)";
+				executeTransaction(insertStatement, transactionId, accId, null, "interest", averageBalance*interestRate, 0);
+				
+				
 			}
 			ResultSet addInterestDate = statement.executeQuery("Insert into InterestAdded values (\'" + formatDateToSQL(currentDate) + "\')");
 					return "0";
