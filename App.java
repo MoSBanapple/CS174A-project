@@ -1616,7 +1616,7 @@ public class App implements Testable
 		String taxID = custSet.getString(1).trim();
 		double total = 0;
 		Statement statement2 = _connection.createStatement();
-		ResultSet accSet = statement2.executeQuery("Select A.accountID from Accounts A");
+		ResultSet accSet = statement2.executeQuery("Select A.accountID from Accounts A WHERE A.accountID in (Select O.accountID from Owns O where O.taxID = \'" + taxID + "\')");
 		while (accSet.next()){
 		    String accID = accSet.getString(1);
 		    Statement statement3 = _connection.createStatement();
