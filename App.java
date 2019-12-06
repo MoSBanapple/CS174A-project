@@ -282,8 +282,9 @@ public class App implements Testable
 			System.out.println("5: Collect money from a pocket account");
 			System.out.println("6: Wire money to another account");
 			System.out.println("7: Pay a friend");
-			System.out.println("8: Change PIN");
-			System.out.println("9: Return to main menu");
+			System.out.println("8: Show balance of an account");
+			System.out.println("9: Change PIN");
+			System.out.println("10: Return to main menu");
 
 			choice = in.nextInt();
 			in.nextLine();
@@ -298,7 +299,7 @@ public class App implements Testable
 					amount = in.nextDouble();
 					if (!isOwnerOf(account1, currentTaxID))
 					{
-						System.out.println("1 Current customer is not an owner of the account.");
+						System.out.println("1 Account does not exist OR current customer is not an owner of the account.");
 					}
 					System.out.println(deposit(account1, amount));
 					break;
@@ -309,7 +310,7 @@ public class App implements Testable
 					amount = in.nextDouble();
 					if (!isOwnerOf(account1, currentTaxID))
 					{
-						System.out.println("1 Current customer is not an owner of the account.");
+						System.out.println("1 Account does not exist OR current customer is not an owner of the account.");
 					}
 					System.out.println(topUp(account1, amount));
 					break;
@@ -332,7 +333,7 @@ public class App implements Testable
 					amount = in.nextDouble();
 					if (!isOwnerOf(account1, currentTaxID))
 					{
-						System.out.println("1 Current customer is not an owner of the account.");
+						System.out.println("1 Account does not exist OR current customer is not an owner of the account.");
 					}
 					System.out.println(purchase(account1, amount));
 					break;
@@ -345,7 +346,7 @@ public class App implements Testable
 					amount = in.nextDouble();
 					if (!isOwnerOf(account1, currentTaxID) || !isOwnerOf(account2, currentTaxID))
 					{
-						System.out.println("1 Current customer is not an owner of at least one of the accounts.");
+						System.out.println("1 Account(s) does not exist OR current customer is not an owner of at least one of the accounts.");
 					}
 					System.out.println(transfer(account1, account2, amount));
 					break;
@@ -356,7 +357,7 @@ public class App implements Testable
 					amount = in.nextDouble();
 					if (!isOwnerOf(account1, currentTaxID))
 					{
-						System.out.println("1 Current customer is not an owner of the account.");
+						System.out.println("1 Account does not exist OR current customer is not an owner of the account.");
 					}
 					System.out.println(collect(account1, amount));
 					break;
@@ -369,7 +370,7 @@ public class App implements Testable
 					amount = in.nextDouble();
 					if (!isOwnerOf(account1, currentTaxID))
 					{
-						System.out.println("1 Current customer is not an owner of the sending account.");
+						System.out.println("1 Account does not exist OR current customer is not an owner of the sending account.");
 					}
 
 					if (isOwnerOf(account2, currentTaxID))
@@ -387,7 +388,7 @@ public class App implements Testable
 					amount = in.nextDouble();
 					if (!isOwnerOf(account1, currentTaxID))
 					{
-						System.out.println("1 Current customer is not an owner of the sending account.");
+						System.out.println("1 Account does not exist OR current customer is not an owner of the sending account.");
 					}
 
 					if (isOwnerOf(account2, currentTaxID))
@@ -397,13 +398,22 @@ public class App implements Testable
 					System.out.println(payFriend(account1, account2, amount));
 					break;
 				case 8:
+					System.out.print("Please input the ID of the account you would like to show the balance of: ");
+					account1 = in.nextLine();
+					if (!isOwnerOf(account1, currentTaxID))
+					{
+						System.out.println("1 Account does not exist OR current customer is not an owner of the account.");
+					}
+					System.out.println(showBalance(account1));
+					break;
+				case 9:
 					System.out.print("Please input your current PIN: ");
 					oldPIN = in.nextLine();
 					System.out.print("Please input your new PIN: ");
 					newPIN = in.nextLine();
 					setPIN(oldPIN, newPIN);
 					break;
-				case 9:
+				case 10:
 					exit = true;
 					break;
 				default:
@@ -788,7 +798,7 @@ public class App implements Testable
 				}
 				return "1 Initial deposit failed. Account not created.";
 			}
-    	return "0 " + id + " " + type + " " + Double.toString(initialBalance) + " " + tin;
+    	return "0 " + id + " " + type + " " + String.format("%.2f", initialBalance) + " " + tin;
     }
     catch( SQLException e )
 		{
@@ -872,7 +882,7 @@ public class App implements Testable
 				//System.out.println("create_pocket6.7");
 				return "1 Initial topup failed.";
 			}
-			return "0 " + id + " Pocket " + Double.toString(initialTopUp) + " " + tin;
+			return "0 " + id + " Pocket " + String.format("%.2f", initialTopUp) + " " + tin;
     }
     catch( SQLException e )
 		{
@@ -1195,6 +1205,7 @@ public class App implements Testable
 	public String purchase(String id, double amount)
 	{
 		int validTrans = 2;
+		double bal = 0.0;
 		try (Statement statement = _connection.createStatement()) {
 			double deductableAmount = amount;
 			if (amount <= 0)
@@ -1210,6 +1221,13 @@ public class App implements Testable
 				deductableAmount += 5.00;
 
 			int transactionId = 0;
+			ResultSet balance = statement.executeQuery( "SELECT balance FROM Accounts WHERE accountID = \'" + id + "\'");
+			if( !balance.next() )
+			{
+				return "1 Account is invalid.";
+			}
+			bal = balance.getDouble(1);
+
 			validTrans = isValidTransaction(id, deductableAmount);
 			if (validTrans == 0)
 				return "1";
@@ -1226,7 +1244,7 @@ public class App implements Testable
 				String insertStatement = "INSERT INTO Transactions VALUES (?,?,?,?,?,?,?)";
 				if (validTrans == 2)
 					executeTransaction(insertStatement, transactionId, id, null, "purchase", deductableAmount, 0);
-				return "0";
+				return "0 " + String.format("%.2f", bal) + " " + String.format("%.2f", bal-deductableAmount);
 			}
 		}
 		catch( Exception e )
@@ -1239,6 +1257,8 @@ public class App implements Testable
 	public String collect(String id, double amount)
 	{
 		int validTrans = 2;
+		double fromBalance = 0.0;
+		double toBalance = 0.0;
 		try (Statement statement = _connection.createStatement()) {
 			double deductableAmount = amount;
 			if (amount <= 0)
@@ -1271,6 +1291,10 @@ public class App implements Testable
 				transactionId = transIds.getInt("maxTransId")+1;
 
 				ResultSet accountId = statement.executeQuery("SELECT ownerID FROM PocketOwner WHERE pocketID = \'" + id + "\'");
+				if (!accountId.next())
+				{
+					return "1 Linked account does not exist -- weird bug";
+				}
 				String mainId = accountId.getString(1);
 				statement.executeQuery("UPDATE Accounts SET balance = balance - " + Double.toString(deductableAmount) + "WHERE accountId = \'" + id + "\'");
 				statement.executeQuery("UPDATE Accounts SET balance = balance + " + Double.toString(amount) + "WHERE accountId IN \'" + mainId + "\'");
@@ -1281,7 +1305,15 @@ public class App implements Testable
 					transactionId++;
 				}
 				executeTransaction(insertStatement, transactionId, mainId, id, "collect_rec", amount, 0);
-				return "0";
+
+				ResultSet rs = statement.executeQuery("SELECT balance FROM Accounts WHERE accountId = \'" + id + "\'");
+				rs.next();
+				fromBalance = rs.getFloat(1);
+				rs = statement.executeQuery("SELECT balance FROM Accounts WHERE accountId = \'" + mainId + "\'");
+				rs.next();
+				toBalance = rs.getFloat(1);
+
+				return "0 " + String.format("%.2f", fromBalance) + " " + String.format("%.2f", toBalance);
 			}
 		}
 		catch( Exception e )
@@ -1294,6 +1326,7 @@ public class App implements Testable
 	public String withdrawal(String id, double amount)
 	{
 		int validTrans = 2;
+		double bal = 0.0;
 
 		try (Statement statement = _connection.createStatement()) {
 			if (amount <= 0)
@@ -1307,6 +1340,13 @@ public class App implements Testable
 			}
 
 			int transactionId = 0;
+
+			ResultSet balance = statement.executeQuery( "SELECT balance FROM Accounts WHERE accountID = \'" + id + "\'");
+			if( !balance.next() )
+			{
+				return "1 Account is invalid.";
+			}
+			bal = balance.getDouble(1);
 
 			validTrans = isValidTransaction(id, amount);
 			if (validTrans == 0)
@@ -1324,7 +1364,7 @@ public class App implements Testable
 				String insertStatement = "INSERT INTO Transactions VALUES (?,?,?,?,?,?,?)";
 				if (validTrans == 2)
 					executeTransaction(insertStatement, transactionId, id, null, "withdrawal", amount, 0);
-				return "0";
+				return "0 " + String.format("%.2f", bal) + " " + String.format("%.2f", bal-amount);
 			}
 		}
 		catch( Exception e )
@@ -1337,6 +1377,8 @@ public class App implements Testable
 	public String wire(String from, String to, double amount)
 	{
 		int validTrans = 2;
+		double fromBalance = 0.0;
+		double toBalance = 0.0;
 		if (from.trim().equals(to.trim()))
 		{
 			return "1 Cannot wire to the same account";
@@ -1380,7 +1422,15 @@ public class App implements Testable
 					transactionId++;
 				}
 				executeTransaction(insertStatement, transactionId, to, from, "wire_rec", amount, 0);
-				return "0";
+
+				ResultSet rs = statement.executeQuery("SELECT balance FROM Accounts WHERE accountId = \'" + from + "\'");
+				rs.next();
+				fromBalance = rs.getFloat(1);
+				rs = statement.executeQuery("SELECT balance FROM Accounts WHERE accountId = \'" + to + "\'");
+				rs.next();
+				toBalance = rs.getFloat(1);
+
+				return "0 " + String.format("%.2f", fromBalance) + " " + String.format("%.2f", toBalance);
 			}
 		}
 		catch( Exception e )
@@ -1392,6 +1442,8 @@ public class App implements Testable
 
 	public String transfer(String from, String to, double amount)
 	{
+		double fromBalance = 0.0;
+		double toBalance = 0.0;
 		int validTrans = 2;
 		if (from.trim().equals(to.trim()))
 		{
@@ -1433,7 +1485,15 @@ public class App implements Testable
 					transactionId++;
 				}
 				executeTransaction(insertStatement, transactionId, to, from, "transfer_rec", amount, 0);
-				return "0";
+
+				ResultSet rs = statement.executeQuery("SELECT balance FROM Accounts WHERE accountId = \'" + from + "\'");
+				rs.next();
+				fromBalance = rs.getFloat(1);
+				rs = statement.executeQuery("SELECT balance FROM Accounts WHERE accountId = \'" + to + "\'");
+				rs.next();
+				toBalance = rs.getFloat(1);
+
+				return "0 " + String.format("%.2f", fromBalance) + " " + String.format("%.2f", toBalance);
 			}
 		}
 		catch( Exception e )
