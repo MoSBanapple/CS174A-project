@@ -1560,7 +1560,7 @@ public class App implements Testable
             Date currentDate = getCurrentDate();
             String startDate = "01-" + monthStr[currentDate.getMonth()] + "-" + currentDate.getYear();
             String endDate = currentDate.getDate() + "-" + monthStr[currentDate.getMonth()] + "-" + currentDate.getYear();
-            String accountsQuery = "Select O.accountID from Owns O Where O.taxID = \'" + taxID + "\'";
+            String accountsQuery = "Select O.accountID, O.isPrimary from Owns O Where O.taxID = \'" + taxID + "\'";
             ResultSet accNumSet = statement.executeQuery(accountsQuery);
             double totalBalance = 0;
             while(accNumSet.next()){
@@ -1572,7 +1572,9 @@ public class App implements Testable
                 int colNum = transactionSet.getMetaData().getColumnCount();
                 String finalBalance = showBalance(thisAccNum).substring(2);
                 double initialBalance = Double.parseDouble(finalBalance);
-                totalBalance += initialBalance;
+		if (accNumSet.getInt(2) == 1){
+		    totalBalance += initialBalance;
+		}
                 while (transactionSet.next()){
                     for (int i = 1; i <= colNum; i++){
 
