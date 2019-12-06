@@ -1382,7 +1382,7 @@ public class App implements Testable
             String output = "0";
 	    ResultSet custSet = statement.executeQuery("Select C.taxID from Customers C");
 	    while (custSet.next()){
-		String taxID = custSet.getString(1);
+		String taxID = custSet.getString(1).trim();
 		double total = 0;
 		Statement statement2 = _connection.createStatement();
 		ResultSet accSet = statement2.executeQuery("Select A.accountID from Accounts A");
@@ -1431,11 +1431,16 @@ public class App implements Testable
                 totalBalance += initialBalance;
                 while (transactionSet.next()){
                     for (int i = 1; i <= colNum; i++){
-                        accOutput += transactionSet.getString(i) + " ";
+			
+			String temp = transactionSet.getString(i);
+			if (temp != null){
+			    temp = temp.trim();
+			}
+                        accOutput += temp + " ";
                     }
                     accOutput += "\n";
                     String transactionType = transactionSet.getString(5).trim();
-                    if (transactionType.substring(transactionType.length() - 4).equals("send") || transactionType.equals("withdrawal") || transactionType.equals("purchase") || transactionType.equals("check")){
+                    if (transactionType.substring(transactionType.length() - 4).equals("send") || transactionType.equals("withdrawal") || transactionType.equals("purchase") || transactionType.equals("check") ||  transactionType.equals("first_transaction_fee")){
                         initialBalance += transactionSet.getDouble(6);
                     } else if (transactionType.substring(transactionType.length() - 4).equals("rec") || transactionType.equals("deposit") || transactionType.equals("interest")){
                         initialBalance -= transactionSet.getDouble(6);
@@ -1534,7 +1539,7 @@ public class App implements Testable
 				int currentDays = totalDays;
 				while (transacts.next()){
 					double averageInfluence = transacts.getDouble(3)*(totalDays-currentDays);
-					String transactionType = transacts.getString(2);
+					String transactionType = transacts.getString(2).trim();
 					if (transactionType.substring(transactionType.length() - 4).equals("send") || transactionType.equals("withdrawal") || transactionType.equals("purchase") || transactionType.equals("check") || transactionType.equals("first_transaction_fee")){
 						averageBalance += averageInfluence;
 					} else {
