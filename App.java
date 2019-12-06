@@ -1500,7 +1500,7 @@ public class App implements Testable
 	    ResultSet resultSet = statement.executeQuery("SELECT accountID FROM Accounts WHERE isOpen = 0");
 	    String output = "0";
 	    while(resultSet.next()){
-					output = output + " " + resultSet.getString(1);
+		output = output + " " + resultSet.getString(1).trim();
 	    }
 	    return output;
 		}
