@@ -1078,7 +1078,7 @@ public class App implements Testable
 
 			if (!isOwnerOf(id, currentTaxID))
 			{
-				System.out.println("Current customer is not an owner of the account");
+				System.out.println("Account does not exist OR current customer is not an owner of the account");
 				return "1";
 			}
 
@@ -1648,6 +1648,7 @@ public String changeInterestRate(AccountType accountType, double newRate){
 		//otherwise: deducting amount is a valid transaction does not trigger any special cases, returns 2
 		private int isValidTransaction(String id, double amount)
 		{
+			String type = "";
 			try (Statement statement = _connection.createStatement()){
 				ResultSet account = statement.executeQuery( "SELECT balance, accountType FROM Accounts WHERE accountID = \'" + id + "\'");
 				if( !account.next() )
@@ -1662,13 +1663,17 @@ public String changeInterestRate(AccountType accountType, double newRate){
 				}
 				else if (account.getDouble("balance") - amount <= 0.01)
 				{
+					type = account.getString("accountType").replaceAll("\\s+","");
 					System.out.println("should close account");
 					statement.executeQuery("UPDATE Accounts SET isOpen = 0 WHERE accountId = \'" + id + "\'");
-					if (!account.getString("accountType").equals("Pocket"))
+					if (!type.equals("Pocket"))
 					{
+						System.out.println("test hehe");
 						statement.executeQuery("UPDATE Accounts SET isOpen = 0 WHERE accountId IN (SELECT pocketID FROM PocketOwner WHERE ownerID = \'" + id + "\')");
 					}
+					System.out.println("test haha");
 					statement.executeQuery("DELETE FROM Transactions WHERE accountID = \'" + id + "\'");
+					System.out.println("test hoho");
 					return 1;
 				}
 				return 2;
