@@ -40,7 +40,7 @@ public class App implements Testable
 		// Statement and ResultSet are AutoCloseable and closed automatically.
 		try( Statement statement = _connection.createStatement() )
 		{
-			try( ResultSet resultSet = statement.executeQuery( "SELECT owner, table_name FROM all_tables" ) )
+			try( ResultSet resultSet = statement.executeQuery( "SELECT owner, table_name FROM user_tables" ) )
 			{
 				while( resultSet.next() )
 					System.out.println( resultSet.getString( 1 ) + " " + resultSet.getString( 2 ) + " " );
@@ -381,7 +381,14 @@ public class App implements Testable
 
 	private void changeSystemDate()
 	{
-
+	    Scanner in = new Scanner(System.in);
+	    System.out.println("Enter year:");
+	    int year = in.nextInt();
+	    System.out.println("Enter month:");
+	    int month = in.nextInt();
+	    System.out.println("Enter day:");
+	    int day = in.nextInt();
+	    System.out.println(setDate(year, month, day));
 	}
 
 	private String requestAccountID(String type)
@@ -399,8 +406,8 @@ public class App implements Testable
 	{
 		// Some constants to connect to your DB.
 		final String DB_URL = "jdbc:oracle:thin:@cs174a.cs.ucsb.edu:1521/orcl";
-		final String DB_USER = "c##shirlyntang";
-		final String DB_PASSWORD = "5320411";
+		final String DB_USER = "c##dzhang01";
+		final String DB_PASSWORD = "4361382";
 
 		// Initialize your system.  Probably setting up the DB connection.
 		Properties info = new Properties();
@@ -448,6 +455,7 @@ public class App implements Testable
 			statement.executeQuery( "DROP TABLE PocketOwner" );
 			statement.executeQuery( "DROP TABLE Customers" );
 			statement.executeQuery( "DROP TABLE Accounts" );
+			statement.executeQuery( "DROP TABLE InterestRates");
 			return "0";
 		}
 		catch( SQLException e )
@@ -462,14 +470,19 @@ public class App implements Testable
 	{
 		try( Statement statement = _connection.createStatement() )
 		{
-				String[] statements = new String[7];
+				String[] statements = new String[12];
 				statements[0] = "CREATE TABLE Customers (taxID CHAR(9), name CHAR(20), address CHAR(50), PIN CHAR(50), PRIMARY KEY (taxID))";
-				statements[1] = "CREATE TABLE Accounts (accountID CHAR(50), interestRate REAL, branchName CHAR(20), balance REAL, isOpen NUMBER(1,0), accountType CHAR(20), PRIMARY KEY (accountID))";
+				statements[1] = "CREATE TABLE Accounts (accountID CHAR(50), branchName CHAR(20), balance REAL, isOpen NUMBER(1,0), accountType CHAR(20), PRIMARY KEY (accountID))";
 				statements[2] = "CREATE TABLE Owns (taxID CHAR(9), accountID CHAR(50), isPrimary NUMBER(1,0), PRIMARY KEY (taxID, accountID), FOREIGN KEY (taxID) REFERENCES Customers ON DELETE CASCADE, FOREIGN KEY (accountID) REFERENCES Accounts ON DELETE CASCADE)";
 				statements[3] = "CREATE TABLE Transactions (transactionID INTEGER, accountID CHAR(50), otherAccount CHAR(50), transactionDate DATE, transactionType CHAR(20), amount REAL, checkNumber INTEGER, PRIMARY KEY (transactionID), FOREIGN KEY (accountID) REFERENCES Accounts)";
 				statements[4] = "CREATE TABLE CurrentDate (currentdate Date)";
 				statements[5] = "CREATE TABLE InterestAdded (dateAdded DATE)";
 				statements[6] = "CREATE TABLE PocketOwner(pocketID CHAR(50), ownerID CHAR(50), PRIMARY KEY(pocketID, ownerID), FOREIGN KEY (pocketID) REFERENCES Accounts (accountID) ON DELETE CASCADE, FOREIGN KEY (ownerID) REFERENCES Accounts (accountID) ON DELETE CASCADE)";
+				statements[7] = "CREATE TABLE InterestRates(accountType char(20), rate REAL)";
+				statements[8] = "INSERT INTO InterestRates(accountType, rate) values (\'InterestChecking\', 0.03)";
+				statements[9] = "INSERT INTO InterestRates(accountType, rate) values (\'Savings\', 0.048)";
+				statements[10] = "INSERT INTO InterestRates(accountType, rate) values (\'Pocket\', 0)";
+				statements[11] = "INSERT INTO InterestRates(accountType, rate) values (\'StudentChecking\', 0)";
 				for (int i = 0; i < statements.length; i++){
 				    ResultSet resultSet = statement.executeQuery( statements[i] );
 						//System.out.println(i);
@@ -505,10 +518,12 @@ public class App implements Testable
 			    return "1";
 			}
 			String dateStr = day + "-" + monthStr[month-1] + "-" + year;
-			try {
-			    Statement statement = _connection.createStatement();
-			    ResultSet resultSet = statement.executeQuery("UPDATE CurrentDate SET currentdate = '" + dateStr + "'");
-					return "0" + dateStr;
+			//System.out.println(dateStr);
+			try(Statement statement = _connection.createStatement()){
+			    //Statement statement = _connection.createStatement();
+
+			    ResultSet resultSet = statement.executeQuery("UPDATE CurrentDate SET currentdate = \'" + dateStr + "\'");
+			    return "0\n" + dateStr;
 			}catch (Exception e){
 			    System.err.println( e.getMessage() );
 			    return "1";
@@ -529,21 +544,22 @@ public class App implements Testable
 		switch (accountType)
 		{
 			case INTEREST_CHECKING:
-				interestRate = 0.03;
+			    //interestRate = 0.03;
 				type = "InterestChecking";
 				break;
 			case SAVINGS:
-				interestRate = 0.048;
+			    //interestRate = 0.048;
 				type = "Savings";
 				break;
 			case STUDENT_CHECKING:
-				interestRate = 0.0;
+			    //interestRate = 0.0;
 				type = "StudentChecking";
 				break;
 			default:
 				System.out.println("Wrong account type.");
 				return "1";
 		}
+
 
 		try (Statement statement = _connection.createStatement())
 		{
@@ -560,7 +576,7 @@ public class App implements Testable
 				counter = 3;
 			}
 
-    	statement.executeQuery("INSERT INTO Accounts VALUES (\'" + id + "\',"+ interestRate + ",\'" + defaultBranchName + "\',0.0, 1, \'" + type + "\')"); //1 near the end means account is open
+    	statement.executeQuery("INSERT INTO Accounts VALUES (\'" + id + "\',\'" + defaultBranchName + "\',0.0, 1, \'" + type + "\')"); //1 near the end means account is open
 			statement.executeQuery("INSERT INTO Owns VALUES (\'" + tin + "\',\'" + id + "\', 1)");
 			System.out.println("create_saving_checking4");
 			deposit(id, initialBalance);
@@ -619,7 +635,7 @@ public class App implements Testable
 				branch = linkedAccount.getString(2);
 			}
 
-			statement.executeQuery("INSERT INTO Accounts VALUES (\'" + id + "\',"+ interestRate + ",\'" + branch + "\', 0.0, 1, \'Pocket\')"); //1 near the end means account is open
+			statement.executeQuery("INSERT INTO Accounts VALUES (\'" + id + "\',\'" + branch + "\', 0.0, 1, \'Pocket\')"); //1 near the end means account is open
 			statement.executeQuery("INSERT INTO Owns VALUES (\'" + tin + "\',\'" + id + "\', 1)");
 			statement.executeQuery("INSERT INTO PocketOwner VALUES (\'" + id + "\',\'"+ linkedId + "\')"); //1 near the end means account is open
 
@@ -1361,11 +1377,27 @@ public class App implements Testable
             Date currentDate = getCurrentDate();
             String start = "01-" + monthStr[currentDate.getMonth()] + "-" + currentDate.getYear();
             String end = currentDate.getDate() + "-" + monthStr[currentDate.getMonth()] + "-" + currentDate.getYear();
-            ResultSet resultSet = statement.executeQuery("Select O2.taxID, Sum(O2.AccTotal) From(Select O.taxID, O.accountID, T2.AccTotal From Owns O INNER JOIN (Select T.accountID, Sum(T.amount) as AccTotal from Transactions T where (T.transactionType = \'deposit\' or T.transactionType = \'transfer_rec\' or T.transactionType = \'wire_rec\') and T.transactionDate BETWEEN \'" + start + "\' AND \'" + end + "\' group by accountID) T2 ON O.accountID = T2.accountID) O2 Group By O2.taxID Having Sum(O2.AccTotal) > 10000");
+            //ResultSet resultSet = statement.executeQuery("Select O2.taxID, Sum(O2.AccTotal) From(Select O.taxID, O.accountID, T2.AccTotal From Owns O INNER JOIN (Select T.accountID, Sum(T.amount) as AccTotal from Transactions T where (T.transactionType = \'deposit\' or T.transactionType = \'transfer_rec\' or T.transactionType = \'wire_rec\') and T.transactionDate BETWEEN \'" + start + "\' AND \'" + end + "\' group by accountID) T2 ON O.accountID = T2.accountID) O2 Group By O2.taxID Having Sum(O2.AccTotal) > 10000");
+	    //ResultSet resultSet = statement.executeQuery("Select O2.taxID, Sum(O2.AccTotal) From (Select O.taxID, O.accountID, T2.AccTotal From Owns O INNER JOIN (Select T.accountID, Sum(T.amount) as AccTotal from Transactions T where (T.transactionType = \'deposit\' or T.transactionType = \'transfer_rec\' or T.transactionType = \'wire_rec\') group by accountID) T2 ON O.accountID = T2.accountID) O2 Group By O2.taxID Having Sum(O2.AccTotal) > 10000");
             String output = "0";
-            while (resultSet.next()){
-                output += " " + resultSet.getString(1);
-            }
+	    ResultSet custSet = statement.executeQuery("Select C.taxID from Customers C");
+	    while (custSet.next()){
+		String taxID = custSet.getString(1).trim();
+		double total = 0;
+		Statement statement2 = _connection.createStatement();
+		ResultSet accSet = statement2.executeQuery("Select A.accountID from Accounts A");
+		while (accSet.next()){
+		    String accID = accSet.getString(1);
+		    Statement statement3 = _connection.createStatement();
+		    ResultSet sumSet = statement3.executeQuery("Select Sum(T.amount) from Transactions T WHERE T.accountID = \'" + accID + "\' and  (T.transactionType = \'deposit\' or T.transactionType = \'transfer_rec\' or T.transactionType = \'wire_rec\')");
+		    while (sumSet.next()){
+			total += sumSet.getDouble(1);
+		    }
+		}
+		if (total >= 10000){
+		    output += "\n" + taxID;
+		}
+	    }
             return output;
         }
         catch( Exception e )
@@ -1388,21 +1420,27 @@ public class App implements Testable
             ResultSet accNumSet = statement.executeQuery(accountsQuery);
             double totalBalance = 0;
             while(accNumSet.next()){
+		Statement statement2 = _connection.createStatement();
                 String thisAccNum = accNumSet.getString(1);
                 String accOutput = thisAccNum + "\n";
-                String transactQuery = "Select * from Transactions T where T.accountID = \'" + thisAccNum + "\' and T.transactionDate between \'" + startDate + "\' and \'" + endDate + "\'";
-                ResultSet transactionSet = statement.executeQuery(transactQuery);
+                String transactQuery = "Select * from Transactions T where T.accountID = \'" + thisAccNum + "\'";
+                ResultSet transactionSet = statement2.executeQuery(transactQuery);
                 int colNum = transactionSet.getMetaData().getColumnCount();
                 String finalBalance = showBalance(thisAccNum).substring(2);
                 double initialBalance = Double.parseDouble(finalBalance);
                 totalBalance += initialBalance;
                 while (transactionSet.next()){
                     for (int i = 1; i <= colNum; i++){
-                        accOutput += transactionSet.getString(i) + " ";
+
+			String temp = transactionSet.getString(i);
+			if (temp != null){
+			    temp = temp.trim();
+			}
+                        accOutput += temp + " ";
                     }
                     accOutput += "\n";
-                    String transactionType = transactionSet.getString(5);
-                    if (transactionType.substring(transactionType.length() - 4).equals("send") || transactionType.equals("withdrawal") || transactionType.equals("purchase") || transactionType.equals("check")){
+                    String transactionType = transactionSet.getString(5).trim();
+                    if (transactionType.substring(transactionType.length() - 4).equals("send") || transactionType.equals("withdrawal") || transactionType.equals("purchase") || transactionType.equals("check") ||  transactionType.equals("first_transaction_fee")){
                         initialBalance += transactionSet.getDouble(6);
                     } else if (transactionType.substring(transactionType.length() - 4).equals("rec") || transactionType.equals("deposit") || transactionType.equals("interest")){
                         initialBalance -= transactionSet.getDouble(6);
@@ -1432,10 +1470,11 @@ public class App implements Testable
             String accountsQuery = "Select O.accountID from Owns O Where O.taxID = \'" + taxId + "\'";
             ResultSet accNumSet = statement.executeQuery(accountsQuery);
             while(accNumSet.next()){
+		Statement statement2 = _connection.createStatement();
                 String thisAccNum = accNumSet.getString(1);
                 output += thisAccNum;
                 String accQuery = "Select A.isOpen from Accounts A where A.accountID = \'" + thisAccNum + "\'";
-                ResultSet accSet = statement.executeQuery(accQuery);
+                ResultSet accSet = statement2.executeQuery(accQuery);
                 while (accSet.next()){
                     if (accSet.getInt(1) == 1){
                         output += " Open\n";
@@ -1449,6 +1488,7 @@ public class App implements Testable
         catch( Exception e )
         {
             System.err.println( e.getMessage() );
+	    //System.err.println("ablong");
             return "1";
         }
     }
@@ -1456,27 +1496,50 @@ public class App implements Testable
 		if (!isLastOfMonth()){
 			return "1 is not last of month";
 		}
+
 		try (Statement statement = _connection.createStatement()){
+		    ResultSet rateSet = statement.executeQuery("Select * from InterestRates I where I.rate > 0");
+		    double interestCheckingRate = 0;
+		    double savingsRate = 0;
+		    while (rateSet.next()){
+			if (rateSet.getString(1).trim().equals("InterestChecking")){
+			    interestCheckingRate = rateSet.getDouble(2);
+			} else if (rateSet.getString(1).trim().equals("Savings")){
+			    savingsRate = rateSet.getDouble(2);
+			}
+		    }
 			ResultSet interestDates = statement.executeQuery("Select * from InterestAdded");
 			Date currentDate = getCurrentDate();
+
 			while (interestDates.next()){
+			    System.out.println(interestDates.getString(1));
 				if (interestDates.getDate(1).compareTo(currentDate) == 0){
 					return "1 already added interest this month";
 				}
 			}
-			ResultSet accountSet = statement.executeQuery("SELECT A.taxID, A.balance, A.interestRate from Accounts A where A.isOpen = 1 and A.interestRate != 0");
+			ResultSet accountSet = statement.executeQuery("SELECT A.accountID, A.balance, A.accountType from Accounts A where A.isOpen = 1 and (A.accountType = \'Savings\' or A.accountType = \'InterestChecking\')");
 			Date firstDate = new Date(currentDate.getYear(), currentDate.getMonth(), 1);
 			int totalDays = currentDate.getDate();
 			while (accountSet.next()){
+			    Statement statement2 = _connection.createStatement();
 				double finalBalance = accountSet.getDouble(2);
 				String accId = accountSet.getString(1);
-				double interestRate = accountSet.getDouble(3)/12;
+				double interestRate = 0;
+			        String accountType = accountSet.getString(3).trim();
+				//System.out.println("Account type: " + accountSet.getString(3));
+				if (accountType.equals("InterestChecking")){
+				    interestRate = interestCheckingRate;
+				} else if (accountType.equals("Savings")){
+				    interestRate = savingsRate;
+				}
+				//System.out.println("Made it past, interestRate = " + interestRate);
 				double averageBalance = finalBalance;
-				ResultSet transacts = statement.executeQuery("SELECT T.transactionDate, T.transactionType, T.amount FROM Transactions T WHERE T.accountID = \'" + accId + "\' and T.transactionDate >= \'" + formatDateToSQL(firstDate) + "\' and T.transactionDate <= \'" + formatDateToSQL(currentDate) + "\' order by T.transactionDate desc");
+				//ResultSet transacts = statement2.executeQuery("SELECT T.transactionDate, T.transactionType, T.amount FROM Transactions T WHERE T.accountID = \'" + accId + "\' and T.transactionDate >= \'" + formatDateToSQL(firstDate) + "\' and T.transactionDate <= \'" + formatDateToSQL(currentDate) + "\' order by T.transactionDate desc");
+				ResultSet transacts = statement2.executeQuery("SELECT T.transactionDate, T.transactionType, T.amount FROM Transactions T WHERE T.accountID = \'" + accId + "\' order by T.transactionDate desc");
 				int currentDays = totalDays;
 				while (transacts.next()){
 					double averageInfluence = transacts.getDouble(3)*(totalDays-currentDays);
-					String transactionType = transacts.getString(2);
+					String transactionType = transacts.getString(2).trim();
 					if (transactionType.substring(transactionType.length() - 4).equals("send") || transactionType.equals("withdrawal") || transactionType.equals("purchase") || transactionType.equals("check") || transactionType.equals("first_transaction_fee")){
 						averageBalance += averageInfluence;
 					} else {
@@ -1484,8 +1547,22 @@ public class App implements Testable
 					}
 				}
 				double newBalance = averageBalance*interestRate + finalBalance;
-				ResultSet interestSet = statement.executeQuery("UPDATE Accounts SET balance = " + newBalance + " where accountID = \'" + accId + "\'");
+				//System.out.println("" + newBalance);
+				Statement statement3 = _connection.createStatement();
+				ResultSet interestSet = statement3.executeQuery("UPDATE Accounts SET balance = " + newBalance + " where accountID = \'" + accId + "\'");
+				ResultSet transIds = statement3.executeQuery( "SELECT nvl(max(transactionId), 0) as maxTransId FROM Transactions");
+				if (!transIds.next())
+				{
+					System.out.println("No transactions but weird bug");
+					return "1";
+				}
+				int transactionId = transIds.getInt("maxTransId")+1;
+				String insertStatement = "INSERT INTO Transactions VALUES (?,?,?,?,?,?,?)";
+				executeTransaction(insertStatement, transactionId, accId, null, "interest", averageBalance*interestRate, 0);
+
+
 			}
+
 			ResultSet addInterestDate = statement.executeQuery("Insert into InterestAdded values (\'" + formatDateToSQL(currentDate) + "\')");
 					return "0";
 			}
@@ -1561,7 +1638,7 @@ public String changeInterestRate(AccountType accountType, double newRate){
 		    return "1";
 		}
 		try (Statement statement = _connection.createStatement()){
-		    ResultSet resultSet = statement.executeQuery("Update Accounts WHERE accountType = \'" + type + "\' SET interestRate = " + newRate);
+		    ResultSet resultSet = statement.executeQuery("Update InterestRates SET rate = " + newRate + " WHERE accountType = \'" + type + "\'");
 		    return "0";
 		}
 		catch( Exception e )
@@ -1666,7 +1743,7 @@ public String changeInterestRate(AccountType accountType, double newRate){
 					type = account.getString("accountType").replaceAll("\\s+","");
 					System.out.println("should close account");
 					statement.executeQuery("UPDATE Accounts SET isOpen = 0 WHERE accountId = \'" + id + "\'");
-					if (!type.equals("Pocket"))
+					if (!account.getString("accountType").trim().equals("Pocket"))
 					{
 						System.out.println("test hehe");
 						statement.executeQuery("UPDATE Accounts SET isOpen = 0 WHERE accountId IN (SELECT pocketID FROM PocketOwner WHERE ownerID = \'" + id + "\')");
