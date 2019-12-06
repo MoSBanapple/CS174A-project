@@ -36,13 +36,20 @@ public class Main
 			System.out.println();
 			System.out.println();
 			*/
-			r = app.listClosedAccounts();
-			System.out.println( r );
+			//r = app.listClosedAccounts();
+			//System.out.println( r );
 
 			// Another example test.
 			//r = app.createCheckingSavingsAccount( AccountType.INTEREST_CHECKING, "account1", 1234.56, "theTaxID", "Im YoungMing", "Known" );
-			System.out.println( r );
-			app.run();
+			//System.out.println( r );
+		        //System.out.println(app.setDate(2011, 3, 14));
+			System.out.println( "ablong" );
+			//app.createTables();
+			//app.run();
+
+
+		    
+			System.out.println(app.createCheckingSavingsAccount(AccountType.STUDENT_CHECKING, "17431", 1000, "344151573", "Joe Pepsi", "3210 State St"));
 		}
 	}
 	//!### FINALIZAMOS

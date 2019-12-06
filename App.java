@@ -406,8 +406,8 @@ public class App implements Testable
 	{
 		// Some constants to connect to your DB.
 		final String DB_URL = "jdbc:oracle:thin:@cs174a.cs.ucsb.edu:1521/orcl";
-		final String DB_USER = "c##shirlyntang";
-		final String DB_PASSWORD = "5320411";
+		final String DB_USER = "c##dzhang01";
+		final String DB_PASSWORD = "4361382";
 
 		// Initialize your system.  Probably setting up the DB connection.
 		Properties info = new Properties();
@@ -470,7 +470,7 @@ public class App implements Testable
 	{
 		try( Statement statement = _connection.createStatement() )
 		{
-				String[] statements = new String[9];
+				String[] statements = new String[12];
 				statements[0] = "CREATE TABLE Customers (taxID CHAR(9), name CHAR(20), address CHAR(50), PIN CHAR(50), PRIMARY KEY (taxID))";
 				statements[1] = "CREATE TABLE Accounts (accountID CHAR(50), branchName CHAR(20), balance REAL, isOpen NUMBER(1,0), accountType CHAR(20), PRIMARY KEY (accountID))";
 				statements[2] = "CREATE TABLE Owns (taxID CHAR(9), accountID CHAR(50), isPrimary NUMBER(1,0), PRIMARY KEY (taxID, accountID), FOREIGN KEY (taxID) REFERENCES Customers ON DELETE CASCADE, FOREIGN KEY (accountID) REFERENCES Accounts ON DELETE CASCADE)";
@@ -479,7 +479,10 @@ public class App implements Testable
 				statements[5] = "CREATE TABLE InterestAdded (dateAdded DATE)";
 				statements[6] = "CREATE TABLE PocketOwner(pocketID CHAR(50), ownerID CHAR(50), PRIMARY KEY(pocketID, ownerID), FOREIGN KEY (pocketID) REFERENCES Accounts (accountID) ON DELETE CASCADE, FOREIGN KEY (ownerID) REFERENCES Accounts (accountID) ON DELETE CASCADE)";
 				statements[7] = "CREATE TABLE InterestRates(accountType char(20), rate REAL)";
-				statements[8] = "INSERT INTO InterestRates(accountType, rate) values (\'InterestChecking\', 0.03), (\'Savings\', 0.048), (\'Pocket\', 0), (\'StudentChecking\', 0)"; 
+				statements[8] = "INSERT INTO InterestRates(accountType, rate) values (\'InterestChecking\', 0.03)";
+				statements[9] = "INSERT INTO InterestRates(accountType, rate) values (\'Savings\', 0.048)";
+				statements[10] = "INSERT INTO InterestRates(accountType, rate) values (\'Pocket\', 0)";
+				statements[11] = "INSERT INTO InterestRates(accountType, rate) values (\'StudentChecking\', 0)";
 				for (int i = 0; i < statements.length; i++){
 				    ResultSet resultSet = statement.executeQuery( statements[i] );
 						//System.out.println(i);
@@ -515,10 +518,12 @@ public class App implements Testable
 			    return "1";
 			}
 			String dateStr = day + "-" + monthStr[month-1] + "-" + year;
-			try {
-			    Statement statement = _connection.createStatement();
-			    ResultSet resultSet = statement.executeQuery("UPDATE CurrentDate SET currentdate = '" + dateStr + "'");
-					return "0\n" + dateStr;
+			//System.out.println(dateStr);
+			try(Statement statement = _connection.createStatement()){
+			    //Statement statement = _connection.createStatement();
+			    
+			    ResultSet resultSet = statement.executeQuery("UPDATE CurrentDate SET currentdate = \'" + dateStr + "\'");
+			    return "0\n" + dateStr;
 			}catch (Exception e){
 			    System.err.println( e.getMessage() );
 			    return "1";
