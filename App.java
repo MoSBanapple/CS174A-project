@@ -56,8 +56,8 @@ public class App implements Testable
 	public void run()
 	{
 		System.out.println(initializeSystem());
-		//System.out.println(dropTables());
-		//System.out.println(createTables());
+		System.out.println(dropTables());
+		System.out.println(createTables());
 
 		Scanner in = new Scanner(System.in);
     int choice = 0;
@@ -68,88 +68,115 @@ public class App implements Testable
 		double interestRate = 0.0;
 
 		//sample data
-		/*createCheckingSavingsAccount(AccountType.STUDENT_CHECKING, "17431", 1200, "344151573", "Joe Pepsi", "3210 State St");
+		System.out.println(createCheckingSavingsAccount(AccountType.STUDENT_CHECKING, "17431", 1200, "344151573", "Joe Pepsi", "3210 State St"));
 		setPIN("1717", "3692");
-		createCustomer("17431", "412231856", "Cindy Laugher", "7000 Hollister");
+		System.out.println(createCustomer("17431", "412231856", "Cindy Laugher", "7000 Hollister"));
 		setPIN("1717","3764");
-		createCustomer("17431", "322175130", "Ivan Lendme", "1235 Johnson Dr");
+		System.out.println(createCustomer("17431", "322175130", "Ivan Lendme", "1235 Johnson Dr"));
 		setPIN("1717","8471");
+		//System.out.println("a");
 
-		createCheckingSavingsAccount(AccountType.STUDENT_CHECKING, "54321", 21000, "212431965", "Hurryson Ford", "678 State St");
+		System.out.println(createCheckingSavingsAccount(AccountType.STUDENT_CHECKING, "54321", 21000, "212431965", "Hurryson Ford", "678 State St"));
 		setPIN("1717", "3532");
-		createCustomer("54321", "412231856", "Cindy Laugher", "7000 Hollister");
-		setPIN("1717","3764");
-		createCustomer("54321", "122219876", "Elizabeth Sailor", "4321 State St");
+		System.out.println(createCustomer("54321", "412231856", "Cindy Laugher", "7000 Hollister"));
+		//setPIN("1717","3764");
+		System.out.println(createCustomer("54321", "122219876", "Elizabeth Sailor", "4321 State St"));
 		setPIN("1717","3856");
-		createCustomer("54321", "203491209", "Nam-Hoi Chung", "1997 People's St HK");
+		System.out.println(createCustomer("54321", "203491209", "Nam-Hoi Chung", "1997 Peoples St HK"));
 		setPIN("1717","5340");
+		//System.out.println("b");
 
-		createCheckingSavingsAccount(AccountType.STUDENT_CHECKING, "12121", 1200, "207843218", "David Copperfill", "1357 State St");
+		System.out.println(createCheckingSavingsAccount(AccountType.STUDENT_CHECKING, "12121", 1200, "207843218", "David Copperfill", "1357 State St"));
 		setPIN("1717", "8582");
+		//System.out.println("c");
 
-		createCheckingSavingsAccount(AccountType.INTEREST_CHECKING, "41725", 15000, "201674933", "George Brush", "5346 Foothill Av");
+		System.out.println(createCheckingSavingsAccount(AccountType.INTEREST_CHECKING, "41725", 15000, "201674933", "George Brush", "5346 Foothill Av"));
 		setPIN("1717", "9824");
 		createCustomer("41725", "401605312", "Fatal Castro", "3756 La Cumbre Plaza");
 		setPIN("1717","8193");
 		createCustomer("41725", "231403227", "Billy Clinton", "5777 Hollister");
 		setPIN("1717","1468");
+		//System.out.println("d");
 
-		createCheckingSavingsAccount(AccountType.INTEREST_CHECKING, "76543", 8456, "212116070", "Li Kung", "2 People's Rd Beijing");
+		System.out.println(createCheckingSavingsAccount(AccountType.INTEREST_CHECKING, "76543", 8456, "212116070", "Li Kung", "2 Peoples Rd Beijing"));
 		setPIN("1717", "9173");
 		createCustomer("76543", "188212217", "Magic Jordon", "3852 Court Rd");
 		setPIN("1717","7351");
+		//System.out.println("e");
 
-		createCheckingSavingsAccount(AccountType.INTEREST_CHECKING, "93156", 2000000, "209378521", "Kelvin Costner", "Santa Cruz #3579");
+		System.out.println(createCheckingSavingsAccount(AccountType.INTEREST_CHECKING, "93156", 2000000, "209378521", "Kelvin Costner", "Santa Cruz #3579"));
 		setPIN("1717", "4659");
 		createCustomer("93156", "188212217", "Magic Jordon", "3852 Court Rd");
-		setPIN("1717","7351");
+		//setPIN("1717","7351");
 		createCustomer("93156", "210389768", "Olive Stoner", "6689 El Colegio #151");
 		setPIN("1717","8452");
 		createCustomer("93156", "122219876", "Elizabeth Sailor", "4321 State St");
-		setPIN("1717","3856");
-		createCustomer("93156", "203491209", "Nam-Hoi Chung", "1997 People's St HK");
-		setPIN("1717","5340");
+		//setPIN("1717","3856");
+		createCustomer("93156", "203491209", "Nam-Hoi Chung", "1997 Peoples St HK");
+		//setPIN("1717","5340");
+		//System.out.println("f");
 
-		createCheckingSavingsAccount(AccountType.SAVINGS, "43942", 1289, "361721022", "Alfred Hitchcock", "6667 El Colegio #40");
+		System.out.println(createCheckingSavingsAccount(AccountType.SAVINGS, "43942", 1289, "361721022", "Alfred Hitchcock", "6667 El Colegio #40"));
 		setPIN("1717", "1234");
 		createCustomer("43942", "400651982", "Pit Wilson", "911 State St");
 		setPIN("1717","1821");
 		createCustomer("43942", "212431965", "Hurryson Ford", "678 State St");
-		setPIN("1717","3532");
+		//setPIN("1717","3532");
 		createCustomer("43942", "322175130", "Ivan Lendme", "1235 Johnson Dr");
-		setPIN("1717","8471");
+		//setPIN("1717","8471");
+		//System.out.println("g");
 
-		createCheckingSavingsAccount(AccountType.SAVINGS, "29107", 34000, "209378521", "Kelvin Costner", "Santa Cruz #3579");
-		setPIN("1717", "4659");
-		createCustomer("29107", "212116070", "Li Kung", "2 People's Rd Beijing");
-		setPIN("1717","9173");
+		System.out.println(createCheckingSavingsAccount(AccountType.SAVINGS, "29107", 34000, "209378521", "Kelvin Costner", "Santa Cruz #3579"));
+		//setPIN("1717", "4659");
+		createCustomer("29107", "212116070", "Li Kung", "2 Peoples Rd Beijing");
+		//setPIN("1717","9173");
 		createCustomer("29107", "210389768", "Olive Stoner", "6689 El Colegio #151");
-		setPIN("1717","8452");
+		//setPIN("1717","8452");
+		//System.out.println("h");
 
-		createCheckingSavingsAccount(AccountType.SAVINGS, "19023", 2300, "412231856", "Cindy Laugher", "7000 Hollister");
-		setPIN("1717","3764");
+		System.out.println(createCheckingSavingsAccount(AccountType.SAVINGS, "19023", 2300, "412231856", "Cindy Laugher", "7000 Hollister"));
+		//setPIN("1717","3764");
 		createCustomer("19023", "201674933", "George Brush", "5346 Foothill Av");
-		setPIN("1717","9824");
+		//setPIN("1717","9824");
 		createCustomer("19023", "401605312", "Fatal Castro", "3756 La Cumbre Plaza");
-		setPIN("1717","8193");
+		//setPIN("1717","8193");
+		//System.out.println("i");
 
-		createCheckingSavingsAccount(AccountType.SAVINGS, "32156", 1000, "188212217", "Magic Jordon", "3852 Court Rd");
-		setPIN("1717","7351");
+		System.out.println(createCheckingSavingsAccount(AccountType.SAVINGS, "32156", 1000, "188212217", "Magic Jordon", "3852 Court Rd"));
+		//setPIN("1717","7351");
 		createCustomer("32156", "207843218", "David Copperfill", "1357 State St");
-		setPIN("1717", "8582");
+		//setPIN("1717", "8582");
 		createCustomer("32156", "122219876", "Elizabeth Sailor", "4321 State St");
-		setPIN("1717","3856");
+		//setPIN("1717","3856");
 		createCustomer("32156", "344151573", "Joe Pepsi", "3210 State St");
-		setPIN("1717", "3692");
-		createCustomer("32156", "203491209", "Nam-Hoi Chung", "1997 People's St HK");
-		setPIN("1717","5340");
+		//setPIN("1717", "3692");
+		createCustomer("32156", "203491209", "Nam-Hoi Chung", "1997 Peoples St HK");
+		//setPIN("1717","5340");
 		createCustomer("32156", "210389768", "Olive Stoner", "6689 El Colegio #151");
-		setPIN("1717","8452");
+		//setPIN("1717","8452");
+		//System.out.println("j");
 
-		createPocketAccount("53027", "12121", 50, "207843218");
-		createPocketAccount("43947", "29107", 30, "212116070");
-		createPocketAccount("60413", "43942", 20, "400651982");
-		createPocketAccount("67521", "19023", 100, "401605312");*/
+		System.out.println(createPocketAccount("53027", "12121", 50, "207843218"));
+		System.out.println(createPocketAccount("43947", "29107", 30, "212116070"));
+		System.out.println(createPocketAccount("60413", "43942", 20, "400651982"));
+		System.out.println(createPocketAccount("67521", "19023", 100, "401605312"));
+
+		/*
+		deposit("17431", 8800.0);
+    withdrawal("54321", 3000.0);
+		withdrawal("76543", 2000.0);
+    purchase("53027", 5.0);
+    deposit("41725", 15000.0);
+    deposit("93156", 2000000.0);
+    top_up("53027", 50.0);
+    deposit("361721022", 1289.0, 43942);
+    deposit("209378521", 34000.0, 29107);
+    deposit("412231856", 2300.0, 19023);
+    top_up("400651982", 20.0, 60413);
+    deposit("188212217", 1000.0, 32156);
+    deposit("212116070", 8456.0, 76543);
+    top_up("212116070", 30.0, 43947);
+    top_up("401605312", 100.0, 67521);*/
 
 		//AccountType.STUDENT_CHECKING,AccountType.INTEREST_CHECKING,AccountType.SAVINGS,AccountType.POCKET;
 		//create checking savings(accountType, account, initialBalance, currentTaxID, name, address);
@@ -865,7 +892,7 @@ public class App implements Testable
 
         try {
 					statement.executeQuery("INSERT INTO Customers VALUES (\'" + tin + "\',\'" + name + "\',\'" + address + "\',\'" + hashedPin + "\')");
-				} catch( SQLException e ){}
+				} catch( SQLException e ){};//System.err.println( e.getMessage() );}
 
 				ResultSet resultSet = statement.executeQuery("SELECT * FROM Accounts WHERE accountID = \'" + accountId + "\'");
 				if (resultSet.next())
@@ -1742,7 +1769,7 @@ public boolean setPIN(String oldPIN, String newPIN)
 		return false;
 	}
 	String hashedPin = hashPin(newPIN);
-	System.out.println(hashedPin);
+	//System.out.println(hashedPin);
 
 	try (Statement statement = _connection.createStatement()){
 		statement.executeQuery("UPDATE Customers SET PIN = \'" + hashedPin + "\' WHERE taxID = \'" + currentTaxID + "\'");
