@@ -56,8 +56,8 @@ public class App implements Testable
 	public void run()
 	{
 		System.out.println(initializeSystem());
-		System.out.println(dropTables());
-		System.out.println(createTables());
+		//System.out.println(dropTables());
+		//System.out.println(createTables());
 
 		Scanner in = new Scanner(System.in);
     int choice = 0;
@@ -68,7 +68,7 @@ public class App implements Testable
 		double interestRate = 0.0;
 
 		//sample data
-		System.out.println(createCheckingSavingsAccount(AccountType.STUDENT_CHECKING, "17431", 1200, "344151573", "Joe Pepsi", "3210 State St"));
+		/*System.out.println(createCheckingSavingsAccount(AccountType.STUDENT_CHECKING, "17431", 1200, "344151573", "Joe Pepsi", "3210 State St"));
 		setPIN("1717", "3692");
 		System.out.println(createCustomer("17431", "412231856", "Cindy Laugher", "7000 Hollister"));
 		setPIN("1717","3764");
@@ -161,7 +161,7 @@ public class App implements Testable
 		System.out.println(createPocketAccount("60413", "43942", 20, "400651982"));
 		System.out.println(createPocketAccount("67521", "19023", 100, "401605312"));
 
-		/*
+		
 		deposit("17431", 8800.0);
     withdrawal("54321", 3000.0);
 		withdrawal("76543", 2000.0);
@@ -1616,7 +1616,7 @@ public class App implements Testable
 		String taxID = custSet.getString(1).trim();
 		double total = 0;
 		Statement statement2 = _connection.createStatement();
-		ResultSet accSet = statement2.executeQuery("Select A.accountID from Accounts A WHERE A.accountID in (Select O.accountID from Owns O where O.taxID = \'" + taxID + "\')");
+		ResultSet accSet = statement2.executeQuery("Select A.accountID from Accounts A");
 		while (accSet.next()){
 		    String accID = accSet.getString(1);
 		    Statement statement3 = _connection.createStatement();
