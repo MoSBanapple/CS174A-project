@@ -470,7 +470,7 @@ public class App implements Testable
 					System.out.println(writeCheck(account, amount));
 					break;
 				case 1:
-					System.out.print("Please input the ID of the account to generate a monthly statement for: ");
+					System.out.print("Please input the ID of the customer to generate a monthly statement for: ");
 					account = in.nextLine();
 					System.out.println(getMonthlyStatement(account));
 					break;
